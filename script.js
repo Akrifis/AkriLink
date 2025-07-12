@@ -25,7 +25,7 @@ document.querySelectorAll('.social-link').forEach(link => {
     });
 });
 // Конфигурация
-const SHIKI_USER_ID = '1361053'; // Найти в URL вашего профиля на Shikimori
+const SHIKI_USER_ID = 1361053; // Найти в URL вашего профиля на Shikimori
 const UPDATE_INTERVAL = 60 * 60 * 1000; // 1 час
 
 // Получение данных с Shikimori API
