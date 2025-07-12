@@ -24,96 +24,153 @@ document.querySelectorAll('.social-link').forEach(link => {
         }
     });
 });
+
+
+
 // Конфигурация
-const SHIKI_USER_ID = 1361053; // Найти в URL вашего профиля на Shikimori
-const UPDATE_INTERVAL = 60 * 60 * 1000; // 1 час
+const CONFIG = {
+    SHIKI_USERNAME: 'Akrifis', // Ваш ник на Shikimori
+    UPDATE_INTERVAL: 60, // Интервал обновления в минутах
+    USE_PROXY: true // Использовать прокси для обхода CORS
+};
 
-// Получение данных с Shikimori API
-async function fetchAnimeList(listType) {
-    try {
-        const response = await fetch(`https://shikimori.one/api/users/${SHIKI_USER_ID}/anime_rates?status=${listType}`);
-        return await response.json();
-    } catch (error) {
-        console.error('Ошибка при загрузке данных:', error);
-        return [];
-    }
-}
+// Глобальные переменные
+let animeData = {};
+let currentStatus = 'watching';
 
-// Отображение аниме
-function displayAnime(list, elementId) {
-    const listElement = document.getElementById(elementId);
-    listElement.innerHTML = '';
-
-    list.forEach(anime => {
-        const animeItem = document.createElement('div');
-        animeItem.className = 'anime-item';
-        
-        animeItem.innerHTML = `
-            <img class="anime-poster" src="https://shikimori.one${anime.anime.image.preview}" alt="${anime.anime.name}">
-            <div class="anime-title">${anime.anime.russian || anime.anime.name}</div>
-        `;
-        
-        listElement.appendChild(animeItem);
-    });
-}
-
-// Переключение табов
-function setupTabs() {
-    const tabs = document.querySelectorAll('.tab-btn');
-    
-    tabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-            // Удаляем активный класс у всех кнопок
-            tabs.forEach(t => t.classList.remove('active'));
-            // Добавляем активный класс текущей кнопке
-            tab.classList.add('active');
-            
-            // Скрываем все списки
-            document.querySelectorAll('.anime-list').forEach(list => {
-                list.style.display = 'none';
-            });
-            
-            // Показываем нужный список
-            document.getElementById(`${tab.dataset.list}-list`).style.display = 'grid';
-        });
-    });
-}
-
-// Загрузка профиля пользователя
-async function loadProfile() {
-    try {
-        const response = await fetch(`https://shikimori.one/api/users/${SHIKI_USER_ID}`);
-        const user = await response.json();
-        
-        document.getElementById('user-avatar').src = `https://shikimori.one${user.avatar}`;
-        document.getElementById('Aktifis').textContent = user.nickname;
-    } catch (error) {
-        console.error('Ошибка при загрузке профиля:', error);
-    }
-}
-
-// Основная функция
-async function loadAllData() {
-    await loadProfile();
-    
-    const [watching, completed, planned] = await Promise.all([
-        fetchAnimeList('watching'),
-        fetchAnimeList('completed'),
-        fetchAnimeList('planned')
-    ]);
-    
-    displayAnime(watching, 'watching-list');
-    displayAnime(completed, 'completed-list');
-    displayAnime(planned, 'planned-list');
-    
-    document.getElementById('last-update').textContent = new Date().toLocaleString();
-}
+// DOM элементы
+const elements = {
+    animeList: document.getElementById('anime-list'),
+    username: document.getElementById('username'),
+    userAvatar: document.getElementById('user-avatar'),
+    userStats: document.getElementById('user-stats'),
+    lastUpdate: document.getElementById('last-update'),
+    updateInterval: document.getElementById('update-interval'),
+    searchInput: document.getElementById('search-input'),
+    tabButtons: document.querySelectorAll('.tab-btn')
+};
 
 // Инициализация
 document.addEventListener('DOMContentLoaded', () => {
-    setupTabs();
-    loadAllData();
-    
-    // Автообновление
-    setInterval(loadAllData, UPDATE_INTERVAL);
+    elements.updateInterval.textContent = CONFIG.UPDATE_INTERVAL;
+    setupEventListeners();
+    loadUserData();
+    loadAnimeData();
+    startAutoUpdate();
 });
+
+// Настройка обработчиков событий
+function setupEventListeners() {
+    // Переключение табов
+    elements.tabButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            elements.tabButtons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentStatus = btn.dataset.status;
+            renderAnimeList();
+        });
+    });
+
+    // Поиск
+    elements.searchInput.addEventListener('input', () => {
+        renderAnimeList();
+    });
+}
+
+// Загрузка данных пользователя
+async function loadUserData() {
+    try {
+        const user = await fetchShikimoriData(`/api/users/${CONFIG.SHIKI_USERNAME}`);
+        
+        elements.username.textContent = user.nickname;
+        elements.userAvatar.src = `https://shikimori.one${user.avatar}`;
+        elements.userStats.textContent = `Аниме: ${user.stats.anime_counts.total} · Манга: ${user.stats.manga_counts.total}`;
+    } catch (error) {
+        console.error('Ошибка загрузки данных пользователя:', error);
+        elements.username.textContent = 'Ошибка загрузки';
+    }
+}
+
+// Загрузка списка аниме
+async function loadAnimeData() {
+    try {
+        const data = await fetchShikimoriData(`/api/users/${CONFIG.SHIKI_USERNAME}/anime_rates`);
+        
+        // Группировка по статусу
+        animeData = {
+            watching: [],
+            completed: [],
+            planned: [],
+            on_hold: [],
+            dropped: []
+        };
+        
+        data.forEach(item => {
+            if (animeData[item.status]) {
+                animeData[item.status].push(item);
+            }
+        });
+        
+        renderAnimeList();
+        updateLastUpdateTime();
+    } catch (error) {
+        console.error('Ошибка загрузки списка аниме:', error);
+    }
+}
+
+// Рендер списка аниме
+function renderAnimeList() {
+    const searchTerm = elements.searchInput.value.toLowerCase();
+    const filteredAnime = animeData[currentStatus].filter(anime => {
+        const title = (anime.anime.russian || anime.anime.name).toLowerCase();
+        return title.includes(searchTerm);
+    });
+    
+    elements.animeList.innerHTML = filteredAnime.map(anime => `
+        <div class="anime-card">
+            <img class="anime-poster" src="https://shikimori.one${anime.anime.image.preview}" alt="${anime.anime.russian || anime.anime.name}">
+            <div class="anime-info">
+                <div class="anime-title" title="${anime.anime.russian || anime.anime.name}">
+                    ${anime.anime.russian || anime.anime.name}
+                </div>
+                <div class="anime-meta">
+                    <span>${anime.score > 0 ? '★'.repeat(anime.score) : 'Без оценки'}</span>
+                    <span>${anime.episodes}/${anime.anime.episodes || '?'}</span>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Обновление времени последнего обновления
+function updateLastUpdateTime() {
+    const now = new Date();
+    elements.lastUpdate.textContent = now.toLocaleString();
+}
+
+// Автоматическое обновление
+function startAutoUpdate() {
+    setInterval(() => {
+        loadAnimeData();
+    }, CONFIG.UPDATE_INTERVAL * 60 * 1000);
+}
+
+// Работа с Shikimori API
+async function fetchShikimoriData(endpoint) {
+    const baseUrl = 'https://shikimori.one';
+    const url = CONFIG.USE_PROXY 
+        ? `https://cors-anywhere.herokuapp.com/${baseUrl}${endpoint}`
+        : `${baseUrl}${endpoint}`;
+    
+    const response = await fetch(url, {
+        headers: CONFIG.USE_PROXY ? {} : {
+            'User-Agent': 'AnimeListApp/1.0'
+        }
+    });
+    
+    if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    return await response.json();
+}
