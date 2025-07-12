@@ -31,7 +31,7 @@ const UPDATE_INTERVAL = 60 * 60 * 1000; // 1 час
 // Получение данных с Shikimori API
 async function fetchAnimeList(listType) {
     try {
-        const response = await fetch(`https://shikimori.me/api/users/${SHIKI_USER_ID}/anime_rates?status=${listType}`);
+        const response = await fetch(`https://shikimori.one/api/users/${SHIKI_USER_ID}/anime_rates?status=${listType}`);
         return await response.json();
     } catch (error) {
         console.error('Ошибка при загрузке данных:', error);
@@ -49,7 +49,7 @@ function displayAnime(list, elementId) {
         animeItem.className = 'anime-item';
         
         animeItem.innerHTML = `
-            <img class="anime-poster" src="https://shikimori.me${anime.anime.image.preview}" alt="${anime.anime.name}">
+            <img class="anime-poster" src="https://shikimori.one${anime.anime.image.preview}" alt="${anime.anime.name}">
             <div class="anime-title">${anime.anime.russian || anime.anime.name}</div>
         `;
         
@@ -82,11 +82,11 @@ function setupTabs() {
 // Загрузка профиля пользователя
 async function loadProfile() {
     try {
-        const response = await fetch(`https://shikimori.me/api/users/${SHIKI_USER_ID}`);
+        const response = await fetch(`https://shikimori.one/api/users/${SHIKI_USER_ID}`);
         const user = await response.json();
         
-        document.getElementById('user-avatar').src = `https://shikimori.me${user.avatar}`;
-        document.getElementById('username').textContent = user.nickname;
+        document.getElementById('user-avatar').src = `https://shikimori.one${user.avatar}`;
+        document.getElementById('Aktifis').textContent = user.nickname;
     } catch (error) {
         console.error('Ошибка при загрузке профиля:', error);
     }
