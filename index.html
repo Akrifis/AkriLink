@@ -39,33 +39,49 @@
     <script src="js/script.js"></script>
 </body>
 </html>
+
+
+
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Мои аниме с Shikimori</title>
+    <title>Мой аниме-лист</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
     <div class="container">
-        <h1>Мой аниме-лист</h1>
-        <div class="profile-info">
-            <img id="user-avatar" src="" alt="Аватар">
-            <h2 id="Akrifis"></h2>
+        <header>
+            <h1>Мой аниме-лист</h1>
+            <div class="user-profile">
+                <img id="user-avatar" src="" alt="Аватар">
+                <div>
+                    <h2 id="username">Загрузка...</h2>
+                    <p id="user-stats"></p>
+                </div>
+            </div>
+        </header>
+
+        <div class="controls">
+            <div class="tabs">
+                <button class="tab-btn active" data-status="watching">Смотрю</button>
+                <button class="tab-btn" data-status="completed">Просмотрено</button>
+                <button class="tab-btn" data-status="planned">В планах</button>
+                <button class="tab-btn" data-status="on_hold">Отложено</button>
+                <button class="tab-btn" data-status="dropped">Брошено</button>
+            </div>
+            <div class="search">
+                <input type="text" id="search-input" placeholder="Поиск аниме...">
+            </div>
         </div>
-        
-        <div class="tabs">
-            <button class="tab-btn active" data-list="watching">Смотрю</button>
-            <button class="tab-btn" data-list="completed">Просмотрено</button>
-            <button class="tab-btn" data-list="planned">В планах</button>
+
+        <div class="anime-list" id="anime-list"></div>
+
+        <div class="stats">
+            <p>Последнее обновление: <span id="last-update"></span></p>
+            <p>Автоматическое обновление каждые <span id="update-interval"></span> минут</p>
         </div>
-        
-        <div class="anime-list" id="watching-list"></div>
-        <div class="anime-list" id="completed-list" style="display:none"></div>
-        <div class="anime-list" id="planned-list" style="display:none"></div>
-        
-        <p class="update-time">Последнее обновление: <span id="last-update"></span></p>
     </div>
 
     <script src="js/script.js"></script>
