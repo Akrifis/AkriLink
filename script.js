@@ -25,13 +25,13 @@ document.querySelectorAll('.social-link').forEach(link => {
     });
 });
 // Конфигурация
-const SHIKI_USER_ID = 'Akrifis'; // Найти в URL вашего профиля на Shikimori
+const SHIKI_USER_ID = 1361053; // Найти в URL вашего профиля на Shikimori
 const UPDATE_INTERVAL = 60 * 60 * 1000; // 1 час
 
 // Получение данных с Shikimori API
 async function fetchAnimeList(listType) {
     try {
-        const response = await fetch(`https://shikimori.me/api/users/${Akrifis}/anime_rates?status=${listType}`);
+        const response = await fetch(`https://shikimori.me/api/users/${SHIKI_USER_ID}/anime_rates?status=${listType}`);
         return await response.json();
     } catch (error) {
         console.error('Ошибка при загрузке данных:', error);
